@@ -12,7 +12,7 @@ import glob
 app = Flask(__name__)
 
 # Directory containing Excel templates
-TEMPLATES_DIR = 'templates'  # Change this to your template directory path
+TEMPLATES_DIR = 'template'  # Change this to your template directory path
 
 def get_available_templates():
     """Get list of available Excel templates from the templates directory"""

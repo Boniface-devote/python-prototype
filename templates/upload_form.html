@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>PDF Data Extractor</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 font-sans">
+    <div class="container mx-auto p-6">
+        <h1 class="text-2xl font-bold mb-6 text-center">PDF Data Extractor</h1>
+        <!-- Tabs -->
+        <div class="mb-4">
+            <ul class="flex border-b">
+                <li class="mr-1">
+                    <button id="normal-tab" class="tab-button bg-white inline-block py-2 px-4 text-blue-600 font-semibold border-b-2 border-blue-600" onclick="showTab('normal')">Normal FERI PDFs</button>
+                </li>
+                <li class="mr-1">
+                    <button id="maritime-tab" class="tab-button bg-white inline-block py-2 px-4 text-gray-600 font-semibold" onclick="showTab('maritime')">Maritime PDFs</button>
+                </li>
+            </ul>
+        </div>
+        <!-- Tab Content -->
+        <div id="normal-form" class="tab-content">
+            <form method="post" enctype="multipart/form-data" action="/process/normal">
+                <h2 class="text-xl font-semibold mb-4">Upload Normal FERI PDF and Optional Excel Template</h2>
+                <div class="mb-4">
+                    <label class="block text-gray-700">PDF File:</label>
+                    <input type="file" name="pdf_file" accept=".pdf" class="mt-1 p-2 border rounded w-full" required>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-gray-700">Excel Template:</label>
+                    <select name="template_file" class="mt-1 p-2 border rounded w-full">
+                        <option value="">Select a template (optional)</option>
+                        {% for template in templates %}
+                        <option value="{{ template }}">{{ template }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-gray-700">Freight Number:</label>
+                    <input type="number" name="freight_number" min="1" placeholder="Enter Freight Number (e.g., 200, 250, 500)" class="mt-1 p-2 border rounded w-full">
+                </div>
+                <input type="submit" value="Upload and Process" class="bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700">
+            </form>
+        </div>
+        <div id="maritime-form" class="tab-content hidden">
+            <form method="post" enctype="multipart/form-data" action="/process/maritime">
+                <h2 class="text-xl font-semibold mb-4">Upload Maritime PDF and Optional Excel Template</h2>
+                <div class="mb-4">
+                    <label class="block text-gray-700">PDF File:</label>
+                    <input type="file" name="pdf_file" accept=".pdf" class="mt-1 p-2 border rounded w-full" required>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-gray-700">Excel Template:</label>
+                    <select name="template_file" class="mt-1 p-2 border rounded w-full">
+                        <option value="">Select a template (optional)</option>
+                        {% for template in templates %}
+                        <option value="{{ template }}">{{ template }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-gray-700">Freight Number:</label>
+                    <input type="number" name="freight_number" min="1" placeholder="Enter Freight Number (e.g., 200, 250, 500)" class="mt-1 p-2 border rounded w-full">
+                </div>
+                <div class="mb-4">
+                    <label class="block text-gray-700">Container Type:</label>
+                    <div class="mt-1">
+                        <input type="checkbox" name="container_type" value="40FT" class="mr-2"> 1*40FT<br>
+                        <input type="checkbox" name="container_type" value="20FT" class="mr-2"> 1*20FT
+                    </div>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-gray-700">Number of Containers:</label>
+                    <input type="number" name="num_containers" min="1" placeholder="Enter Number of Containers (default: 1)" class="mt-1 p-2 border rounded w-full">
+                </div>
+                <input type="submit" value="Upload and Process" class="bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700">
+            </form>
+        </div>
+        {% if data %}
+        <h2 class="text-xl font-semibold mt-6">Extracted Data</h2>
+        <pre class="bg-white p-4 rounded shadow">{{ json_data|safe }}</pre>
+        {% endif %}
+        {% if modified %}
+        <h2 class="text-xl font-semibold mt-6">Downloads</h2>
+        <a href="/download_excel" class="text-blue-600 hover:underline">Download Modified Excel</a><br>
+        <a href="/download_pdf" class="text-blue-600 hover:underline">Download as PDF</a>
+        {% endif %}
+    </div>
+    <script>
+        function showTab(tab) {
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.add('hidden'));
+            document.querySelectorAll('.tab-button').forEach(button => {
+                button.classList.remove('text-blue-600', 'border-blue-600');
+                button.classList.add('text-gray-600');
+            });
+            document.getElementById(tab + '-form').classList.remove('hidden');
+            document.getElementById(tab + '-tab').classList.add('text-blue-600', 'border-blue-600');
+            document.getElementById(tab + '-tab').classList.remove('text-gray-600');
+        }
+        // Initialize with Normal FERI tab
+        showTab('normal');
+    </script>
+</body>
+</html>
