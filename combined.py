@@ -6,8 +6,22 @@ import openpyxl
 from reportlab.lib.pagesizes import letter
 from reportlab.platypus import SimpleDocTemplate, Table
 import json
+import os
+import glob
 
 app = Flask(__name__)
+
+# Directory containing Excel templates
+TEMPLATES_DIR = 'templates'  # Change this to your template directory path
+
+def get_available_templates():
+    """Get list of available Excel templates from the templates directory"""
+    if not os.path.exists(TEMPLATES_DIR):
+        os.makedirs(TEMPLATES_DIR)
+        return []
+    
+    excel_files = glob.glob(os.path.join(TEMPLATES_DIR, '*.xlsx'))
+    return [os.path.basename(f) for f in excel_files]
 
 # Global variables to store the modified files in memory
 modified_excel_global = None
@@ -45,8 +59,13 @@ UPLOAD_FORM = '''
                     <input type="file" name="pdf_file" accept=".pdf" class="mt-1 p-2 border rounded w-full" required>
                 </div>
                 <div class="mb-4">
-                    <label class="block text-gray-700">Excel File (optional):</label>
-                    <input type="file" name="excel_file" accept=".xlsx" class="mt-1 p-2 border rounded w-full">
+                    <label class="block text-gray-700">Excel Template:</label>
+                    <select name="template_file" class="mt-1 p-2 border rounded w-full">
+                        <option value="">Select a template (optional)</option>
+                        {% for template in templates %}
+                        <option value="{{ template }}">{{ template }}</option>
+                        {% endfor %}
+                    </select>
                 </div>
                 <div class="mb-4">
                     <label class="block text-gray-700">Freight Number:</label>
@@ -63,8 +82,13 @@ UPLOAD_FORM = '''
                     <input type="file" name="pdf_file" accept=".pdf" class="mt-1 p-2 border rounded w-full" required>
                 </div>
                 <div class="mb-4">
-                    <label class="block text-gray-700">Excel File (optional):</label>
-                    <input type="file" name="excel_file" accept=".xlsx" class="mt-1 p-2 border rounded w-full">
+                    <label class="block text-gray-700">Excel Template:</label>
+                    <select name="template_file" class="mt-1 p-2 border rounded w-full">
+                        <option value="">Select a template (optional)</option>
+                        {% for template in templates %}
+                        <option value="{{ template }}">{{ template }}</option>
+                        {% endfor %}
+                    </select>
                 </div>
                 <div class="mb-4">
                     <label class="block text-gray-700">Freight Number:</label>
@@ -223,7 +247,8 @@ def extract_data_from_pdf(pdf_content, pdf_type):
 
 @app.route('/')
 def index():
-    return render_template_string(UPLOAD_FORM, data=None, modified=False)
+    templates = get_available_templates()
+    return render_template_string(UPLOAD_FORM, data=None, modified=False, templates=templates)
 
 @app.route('/process/<pdf_type>', methods=['POST'])
 def process_pdf(pdf_type):
@@ -246,12 +271,14 @@ def process_pdf(pdf_type):
         # Format JSON data for frontend display (same as console output)
         json_data = json.dumps(data, ensure_ascii=False, indent=2)
 
-        # Check for Excel file
+        # Check for selected template
         excel_content = None
-        if 'excel_file' in request.files:
-            excel_file = request.files['excel_file']
-            if excel_file and excel_file.filename.endswith('.xlsx'):
-                excel_content = BytesIO(excel_file.read())
+        template_file = request.form.get('template_file', '').strip()
+        if template_file:
+            template_path = os.path.join(TEMPLATES_DIR, template_file)
+            if os.path.exists(template_path):
+                with open(template_path, 'rb') as f:
+                    excel_content = BytesIO(f.read())
 
         # Get Freight Number from form input
         freight_number = request.form.get('freight_number', '').strip()
@@ -342,7 +369,8 @@ def process_pdf(pdf_type):
 
             modified = True
 
-    return render_template_string(UPLOAD_FORM, data=data, json_data=json_data, modified=modified)
+    templates = get_available_templates()
+    return render_template_string(UPLOAD_FORM, data=data, json_data=json_data, modified=modified, templates=templates)
 
 @app.route('/download_excel')
 def download_excel():
