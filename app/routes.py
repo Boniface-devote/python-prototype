@@ -1,14 +1,17 @@
 from flask import Blueprint, render_template, request, send_file
 from .data_extraction import extract_data_from_pdf
-from .processing import get_available_templates, process_excel_and_pdf, modified_excel_global, modified_pdf_global, data_global, pdf_type_global
+from .processing import get_available_templates, process_excel_and_pdf, laban_dir, malaba_dir, modified_excel_global, modified_pdf_global, data_global, pdf_type_global
 import re
 
 bp = Blueprint('main', __name__)
 
 @bp.route('/')
 def index():
-    templates = get_available_templates()
-    return render_template('upload_form.html', data=None, modified=False, templates=templates)
+    # templates = get_available_templates()
+    # return render_template('upload_form.html', data=None, modified=False, templates=templates)
+    normal_templates = get_available_templates(laban_dir)
+    maritime_templates = get_available_templates(malaba_dir)
+    return render_template('upload_form.html', normal_templates=normal_templates, maritime_templates=maritime_templates)
 
 @bp.route('/process/<pdf_type>', methods=['POST'])
 def process_pdf(pdf_type):
@@ -52,8 +55,9 @@ def process_pdf(pdf_type):
         )
         modified = modified_excel is not None
 
-    templates = get_available_templates()
-    return render_template('upload_form.html', data=data, json_data=json_data, modified=modified, templates=templates)
+    normal_templates = get_available_templates(laban_dir)
+    maritime_templates = get_available_templates(malaba_dir)
+    return render_template('upload_form.html', data=data, json_data=json_data, modified=modified, normal_templates=normal_templates, maritime_templates=maritime_templates)
 
 @bp.route('/download_excel')
 def download_excel():

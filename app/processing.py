@@ -1,121 +1,124 @@
-import xlwings as xw
+import openpyxl
 from io import BytesIO
+from reportlab.lib.pagesizes import letter
+from reportlab.platypus import SimpleDocTemplate, Table
 import os
 import glob
 import json
-import tempfile
 
 # Directory containing Excel templates
-TEMPLATES_DIR = 'template'  # Change this to your template directory path
+laban_dir = 'template/laban'  # Directory for Normal FERI templates
+malaba_dir = 'template/malaba'  # Directory for Maritime templates
 
-# Global variables to store the modified files in memory
+# Global variables to store the modified files and data in memory
 modified_excel_global = None
 modified_pdf_global = None
-
-def get_available_templates():
-    """Get list of available Excel templates from the templates directory"""
-    if not os.path.exists(TEMPLATES_DIR):
-        os.makedirs(TEMPLATES_DIR)
-        return []
-    
-    excel_files = glob.glob(os.path.join(TEMPLATES_DIR, '*.xlsx'))
-    return [os.path.basename(f) for f in excel_files]
-
 data_global = None
 pdf_type_global = None
 
+def get_available_templates(template_dir):
+    """Get list of available Excel templates from the specified directory"""
+    if not os.path.exists(template_dir):
+        os.makedirs(template_dir)
+        return []
+    
+    excel_files = glob.glob(os.path.join(template_dir, '*.xlsx'))
+    return [os.path.basename(f) for f in excel_files]
+
 def process_excel_and_pdf(data, pdf_type, template_file, freight_number, container_type='', num_containers=1):
     """
-    Process extracted data, update Excel template with xlwings, 
-    force recalculation, and generate a real Excel + PDF.
+    Process extracted data, update Excel template, and generate PDF.
+    Returns modified Excel, PDF buffers, and formatted JSON data.
     """
-    global data_global, pdf_type_global
+    global modified_excel_global, modified_pdf_global, data_global, pdf_type_global
     json_data = json.dumps(data, ensure_ascii=False, indent=2)
     modified_excel = None
     modified_pdf = None
 
+    # Store data and pdf_type globally
+    data_global = data
+    pdf_type_global = pdf_type
+
     # Check for selected template
-    if not template_file:
-        return None, None, json_data
+    excel_content = None
+    if template_file:
+        template_path = os.path.join(laban_dir if pdf_type == 'normal' else malaba_dir, template_file)
+        if os.path.exists(template_path):
+            with open(template_path, 'rb') as f:
+                excel_content = BytesIO(f.read())
+        template_path = os.path.join(laban_dir if pdf_type == 'normal' else malaba_dir, template_file)
+        if os.path.exists(template_path):
+            with open(template_path, 'rb') as f:
+                excel_content = BytesIO(f.read())
 
-    template_path = os.path.join(TEMPLATES_DIR, template_file)
-    if not os.path.exists(template_path):
-        return None, None, json_data
+    if excel_content:
+        # Load workbook
+        wb = openpyxl.load_workbook(excel_content)
+        ws = wb.active
 
-    # Use a temporary folder for saving
-    with tempfile.TemporaryDirectory() as tmpdir:
-        modified_xlsx_path = os.path.join(tmpdir, "modified.xlsx")
-        modified_pdf_path = os.path.join(tmpdir, "modified.pdf")
-
-        # Open Excel with xlwings
-        app = xw.App(visible=False)
-        wb = app.books.open(template_path)
-        ws = wb.sheets[0]
-
-        # --- Insert data ---
+        # Insert data into specific cells
         if pdf_type == 'normal':
             if 'attestation_number' in data:
-                ws.range("E6").value = f"FERI/AD: {data['attestation_number']}"
-                ws.range("B11").value = f"CERTIFICATE (FERI/ADR/AD) No : {data['attestation_number']}"
+                ws['E6'] = f"FERI/AD: {data['attestation_number']}"
+                ws['B11'] = f"CERTIFICATE (FERI/ADR/AD) No : {data['attestation_number']}"
             if 'forwarding_agent' in data:
-                ws.range("B8").value = f"DEBTOR: {data['forwarding_agent']}"
+                ws['B8'] = f"DEBTOR: {data['forwarding_agent']}"
             if 'importateur' in data:
-                ws.range("B10").value = f"IMPORTER: {data['importateur']}"
+                ws['B10'] = f"IMPORTER: {data['importateur']}"
             if 'transport_id' in data:
-                ws.range("B14").value = data['transport_id']
+                ws['B14'] = data['transport_id']
             if 'cbm' in data:
                 cbm_value = float(data['cbm'].replace(' CBM', ''))
-                ws.range("D14").value = cbm_value
+                ws['D14'] = cbm_value
             if freight_number is not None:
-                ws.range("D18").value = freight_number
+                ws['D18'] = freight_number
 
+            fields = ['attestation_number', 'exporter', 'forwarding_agent', 'transport_id', 'cbm', 'gross_weight']
         else:  # maritime
             if 'feri_number' in data:
-                ws.range("E6").value = f"FERI/AD: {data['feri_number']}"
-                ws.range("B11").value = f"CERTIFICATE (FERI/ADR/AD) No : {data['feri_number']}"
+                ws['E6'] = f"FERI/AD: {data['feri_number']}"
+                ws['B11'] = f"CERTIFICATE (FERI/ADR/AD) No : {data['feri_number']}"
             if 'transitaire' in data:
-                ws.range("B8").value = f"DEBTOR: {data['transitaire']}"
+                ws['B8'] = f"DEBTOR: {data['transitaire']}"
             if 'importateur' in data:
-                ws.range("B10").value = f"IMPORTER: {data['importateur']}"
+                ws['B10'] = f"IMPORTER: {data['importateur']}"
             if 'bl' in data:
-                ws.range("B14").value = data['bl']
+                ws['B14'] = data['bl']
             if 'cbm' in data and container_type not in ['40FT', '20FT']:
                 cbm_value = float(data['cbm'].replace(' CBM', ''))
-                ws.range("D14").value = cbm_value
+                ws['D14'] = cbm_value
             if container_type == '40FT':
-                ws.range("D14").value = 110
+                ws['D14'] = 110
             elif container_type == '20FT':
-                ws.range("D14").value = 60
-            ws.range("E14").value = num_containers
-            ws.range("D17").value = num_containers
-            ws.range("D18").value = num_containers * 250
+                ws['D14'] = 60
+            ws['E14'] = num_containers
+            ws['D17'] = num_containers
+            ws['D18'] = num_containers * 250
             if freight_number is not None:
-                ws.range("D18").value = freight_number
+                ws['D18'] = freight_number
 
-        # --- Force Excel to recalc all formulas ---
-        wb.app.calculate()
+            fields = ['feri_number', 'exporter', 'transitaire', 'bl', 'cbm', 'gross_weight']
 
-        # Save Excel
-        wb.save(modified_xlsx_path)
+        # Append row data
+        row_data = [data.get(f, '') for f in fields]
+        ws.append(row_data)
 
-        # Export to PDF using Excel's engine
-        wb.api.ExportAsFixedFormat(0, modified_pdf_path)
+        # Save modified Excel
+        modified_excel = BytesIO()
+        wb.save(modified_excel)
+        modified_excel.seek(0)
 
-        wb.close()
-        app.quit()
-
-        # Load into memory buffers
-        with open(modified_xlsx_path, "rb") as f:
-            modified_excel = BytesIO(f.read())
-        with open(modified_pdf_path, "rb") as f:
-            modified_pdf = BytesIO(f.read())
+        # Create PDF from the Excel data
+        sheet_data = [list(row) for row in ws.iter_rows(values_only=True)]
+        pdf_buffer = BytesIO()
+        doc = SimpleDocTemplate(pdf_buffer, pagesize=letter)
+        table = Table(sheet_data)
+        doc.build([table])
+        pdf_buffer.seek(0)
 
         # Store in globals
         global modified_excel_global, modified_pdf_global
         modified_excel_global = modified_excel
-        modified_pdf_global = modified_pdf
+        modified_pdf_global = pdf_buffer
 
-
-    data_global = data
-    pdf_type_global = pdf_type
     return modified_excel, modified_pdf, json_data

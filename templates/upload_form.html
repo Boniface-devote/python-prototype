@@ -31,7 +31,7 @@
                     <label class="block text-gray-700">Excel Template:</label>
                     <select name="template_file" class="mt-1 p-2 border rounded w-full">
                         <option value="">Select a template (optional)</option>
-                        {% for template in templates %}
+                        {% for template in normal_templates %}
                         <option value="{{ template }}">{{ template }}</option>
                         {% endfor %}
                     </select>
@@ -54,7 +54,7 @@
                     <label class="block text-gray-700">Excel Template:</label>
                     <select name="template_file" class="mt-1 p-2 border rounded w-full">
                         <option value="">Select a template (optional)</option>
-                        {% for template in templates %}
+                        {% for template in maritime_templates %}
                         <option value="{{ template }}">{{ template }}</option>
                         {% endfor %}
                     </select>
