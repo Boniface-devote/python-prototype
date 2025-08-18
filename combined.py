@@ -5,7 +5,6 @@ from io import BytesIO
 import openpyxl
 from reportlab.lib.pagesizes import letter
 from reportlab.platypus import SimpleDocTemplate, Table
-import json
 
 app = Flask(__name__)
 
@@ -86,7 +85,7 @@ UPLOAD_FORM = '''
         </div>
         {% if data %}
         <h2 class="text-xl font-semibold mt-6">Extracted Data</h2>
-        <pre class="bg-white p-4 rounded shadow">{{ json_data|safe }}</pre>
+        <pre class="bg-white p-4 rounded shadow">{{ data | tojson(indent=4) }}</pre>
         {% endif %}
         {% if modified %}
         <h2 class="text-xl font-semibold mt-6">Downloads</h2>
@@ -127,7 +126,7 @@ def extract_data_from_pdf(pdf_content, pdf_type):
 
     if pdf_type == 'normal':
         # Attestation Number
-        match = re.search(r'A\.D\s+NÂ°\s*(\w+)', text)
+        match = re.search(r'A\.D\s+N°\s*(\w+)', text)
         if match:
             extracted['attestation_number'] = match.group(1)
 
@@ -135,15 +134,18 @@ def extract_data_from_pdf(pdf_content, pdf_type):
         match = re.search(r'IMPORTATEUR\s*:\s*([^\s;][^;]*?)(?:\s*;|EXPORTATEUR)', text, re.DOTALL)
         if match:
             importateur_name = match.group(1).strip()
-            name_match = re.match(r'^[A-Z\s().&]+(?:\s*\([A-Z]+\)\s*[A-Z.]+)?', importateur_name)
+            name_match = re.match(r'^[A-Z\s().]+(?:\s*\([A-Z]+\)\s*[A-Z.]+)?', importateur_name)
             importateur_name = name_match.group(0).strip() if name_match else importateur_name
+            extracted['importateur'] = importateur_name
+            if importateur_name.endswith(' I'):
+                importateur_name = importateur_name[:-2].strip()
             extracted['importateur'] = importateur_name
 
         # Exporter (only name)
         match = re.search(r'EXPORTATEUR\s*([^\s;][^;]*?)(?:\s*;|TRANSITAIRE)', text, re.DOTALL)
         if match:
             exporter_name = match.group(1).strip()
-            name_match = re.match(r'^[A-Z\s().&]+(?:\s*\([A-Z]+\)\s*[A-Z.]+)?', exporter_name)
+            name_match = re.match(r'^[A-Z\s()]+(?:\s*\([A-Z]+\)\s*[A-Z]+)?', exporter_name)
             exporter_name = name_match.group(0).strip() if name_match else exporter_name
             if exporter_name.endswith(' E'):
                 exporter_name = exporter_name[:-2].strip()
@@ -153,7 +155,7 @@ def extract_data_from_pdf(pdf_content, pdf_type):
         match = re.search(r'TRANSITAIRE\s*:\s*([^\s;][^;]*?)(?:\s*Forwarding agent|DEST\.)', text, re.DOTALL)
         if match:
             forwarding_name = match.group(1).strip()
-            name_match = re.match(r'^[A-Z\s().&]+(?:\s*\([A-Z]+\)\s*[A-Z.]+)?', forwarding_name)
+            name_match = re.match(r'^[A-Z\s().]+(?:\s*\([A-Z]+\)\s*[A-Z.]+)?', forwarding_name)
             extracted['forwarding_agent'] = name_match.group(0).strip() if name_match else forwarding_name
 
         # Transport ID
@@ -173,7 +175,7 @@ def extract_data_from_pdf(pdf_content, pdf_type):
 
     else:  # maritime
         # FERI Number or Attestation Number
-        match = re.search(r'(?:FERI NÂ°|VALIDATION|A\.D\s+NÂ°)\s*:\s*(\w+)', text)
+        match = re.search(r'(?:FERI N°|VALIDATION|A\.D\s+N°)\s*:\s*(\w+)', text)
         if match:
             extracted['feri_number'] = match.group(1)
 
@@ -181,15 +183,18 @@ def extract_data_from_pdf(pdf_content, pdf_type):
         match = re.search(r'IMPORTATEUR\s*:\s*([^\s;][^;]*?)(?:\s*;|EXPORTATEUR|ADD:|$)', text, re.DOTALL)
         if match:
             importateur_name = match.group(1).strip()
-            name_match = re.match(r'^[A-Z\s().&]+(?:\s*\([A-Z]+\)\s*[A-Z.]+)?', importateur_name)
+            name_match = re.match(r'^[A-Z\s()]+(?:\s*\([A-Z]+\)\s*[A-Z]+)?', importateur_name)
             importateur_name = name_match.group(0).strip() if name_match else importateur_name
+            extracted['importateur'] = importateur_name
+            if importateur_name.endswith(' I'):
+                importateur_name = importateur_name[:-2].strip()
             extracted['importateur'] = importateur_name
 
         # Transitaire (only name)
         match = re.search(r'TRANSITAIRE\s*:\s*([^\s;][^;]*?)(?:\s*Forwarding agent|DEST\.|ADD:|$)', text, re.DOTALL)
         if match:
             forwarding_name = match.group(1).strip()
-            name_match = re.match(r'^[A-Z\s().&]+(?:\s*\([A-Z]+\)\s*[A-Z.]+)?', forwarding_name)
+            name_match = re.match(r'^[A-Z\s().]+(?:\s*\([A-Z]+\)\s*[A-Z.]+)?', forwarding_name)
             extracted['transitaire'] = name_match.group(0).strip() if name_match else forwarding_name
 
         # BL (Bill of Lading)
@@ -211,13 +216,11 @@ def extract_data_from_pdf(pdf_content, pdf_type):
         match = re.search(r'EXPORTATEUR\s*([^\s;][^;]*?)(?:\s*;|TRANSITAIRE|$)', text, re.DOTALL)
         if match:
             exporter_name = match.group(1).strip()
-            name_match = re.match(r'^[A-Z\s().&]+(?:\s*\([A-Z]+\)\s*[A-Z.]+)?', exporter_name)
+            name_match = re.match(r'^[A-Z\s().&]+(?:\s*\([A-Z]+\)\s*[A-Z.&]+)?', exporter_name)
             exporter_name = name_match.group(0).strip() if name_match else exporter_name
             if exporter_name.endswith(' E'):
                 exporter_name = exporter_name[:-2].strip()
             extracted['exporter'] = exporter_name
-
-    print(json.dumps(extracted, ensure_ascii=False, indent=2))
 
     return extracted
 
@@ -232,8 +235,6 @@ def process_pdf(pdf_type):
 
     data = None
     modified = False
-    json_data = None
-    
     if 'pdf_file' not in request.files:
         return "No PDF file part"
     pdf_file = request.files['pdf_file']
@@ -242,9 +243,6 @@ def process_pdf(pdf_type):
     if pdf_file and pdf_file.filename.endswith('.pdf'):
         pdf_content = pdf_file.read()
         data = extract_data_from_pdf(pdf_content, pdf_type)
-        
-        # Format JSON data for frontend display (same as console output)
-        json_data = json.dumps(data, ensure_ascii=False, indent=2)
 
         # Check for Excel file
         excel_content = None
@@ -342,7 +340,7 @@ def process_pdf(pdf_type):
 
             modified = True
 
-    return render_template_string(UPLOAD_FORM, data=data, json_data=json_data, modified=modified)
+    return render_template_string(UPLOAD_FORM, data=data, modified=modified)
 
 @app.route('/download_excel')
 def download_excel():
