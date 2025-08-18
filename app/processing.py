@@ -21,12 +21,15 @@ def get_available_templates():
     excel_files = glob.glob(os.path.join(TEMPLATES_DIR, '*.xlsx'))
     return [os.path.basename(f) for f in excel_files]
 
+data_global = None
+pdf_type_global = None
 
 def process_excel_and_pdf(data, pdf_type, template_file, freight_number, container_type='', num_containers=1):
     """
     Process extracted data, update Excel template with xlwings, 
     force recalculation, and generate a real Excel + PDF.
     """
+    global data_global, pdf_type_global
     json_data = json.dumps(data, ensure_ascii=False, indent=2)
     modified_excel = None
     modified_pdf = None
@@ -112,4 +115,7 @@ def process_excel_and_pdf(data, pdf_type, template_file, freight_number, contain
         modified_excel_global = modified_excel
         modified_pdf_global = modified_pdf
 
+
+    data_global = data
+    pdf_type_global = pdf_type
     return modified_excel, modified_pdf, json_data

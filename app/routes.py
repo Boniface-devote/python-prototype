@@ -1,6 +1,7 @@
 from flask import Blueprint, render_template, request, send_file
 from .data_extraction import extract_data_from_pdf
-from .processing import get_available_templates, process_excel_and_pdf
+from .processing import get_available_templates, process_excel_and_pdf, modified_excel_global, modified_pdf_global, data_global, pdf_type_global
+import re
 
 bp = Blueprint('main', __name__)
 
@@ -56,16 +57,54 @@ def process_pdf(pdf_type):
 
 @bp.route('/download_excel')
 def download_excel():
-    from .processing import modified_excel_global
+    from .processing import modified_excel_global, data_global, pdf_type_global
     if modified_excel_global is None:
         return "No modified Excel available"
+    
+    # Determine download name based on pdf_type and data
+    download_name = 'modified.xlsx'
+    if data_global and pdf_type_global:
+        identifier = None
+        if pdf_type_global == 'maritime' and 'bl' in data_global:
+            identifier = data_global['bl']
+        elif pdf_type_global == 'normal' and 'transport_id' in data_global:
+            identifier = data_global['transport_id']
+        if identifier:
+            # Sanitize identifier for safe filename
+            identifier = re.sub(r'[^\w\-]', '_', identifier.strip())
+            download_name = f'Proforma_Invoice_{identifier}.xlsx'
+
     modified_excel_global.seek(0)
-    return send_file(modified_excel_global, as_attachment=True, download_name='modified.xlsx', mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    return send_file(
+        modified_excel_global,
+        as_attachment=True,
+        download_name=download_name,
+        mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    )
 
 @bp.route('/download_pdf')
 def download_pdf():
-    from .processing import modified_pdf_global
+    from .processing import modified_pdf_global, data_global, pdf_type_global
     if modified_pdf_global is None:
         return "No PDF available"
+    
+    # Determine download name based on pdf_type and data
+    download_name = 'modified.pdf'
+    if data_global and pdf_type_global:
+        identifier = None
+        if pdf_type_global == 'maritime' and 'bl' in data_global:
+            identifier = data_global['bl']
+        elif pdf_type_global == 'normal' and 'transport_id' in data_global:
+            identifier = data_global['transport_id']
+        if identifier:
+            # Sanitize identifier for safe filename
+            identifier = re.sub(r'[^\w\-]', '_', identifier.strip())
+            download_name = f'Proforma_Invoice_{identifier}.pdf'
+
     modified_pdf_global.seek(0)
-    return send_file(modified_pdf_global, as_attachment=True, download_name='modified.pdf', mimetype='application/pdf')
+    return send_file(
+        modified_pdf_global,
+        as_attachment=True,
+        download_name=download_name,
+        mimetype='application/pdf'
+    )
