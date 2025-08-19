@@ -8,6 +8,12 @@
 <body class="bg-gray-100 font-sans">
     <div class="container mx-auto p-6">
         <h1 class="text-2xl font-bold mb-6 text-center">PDF Data Extractor</h1>
+        <!-- Error Message Display -->
+        {% if error %}
+        <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+            {{ error }}
+        </div>
+        {% endif %}
         <!-- Tabs -->
         <div class="mb-4">
             <ul class="flex border-b">
@@ -21,7 +27,7 @@
         </div>
         <!-- Tab Content -->
         <div id="normal-form" class="tab-content">
-            <form method="post" enctype="multipart/form-data" action="/process/normal">
+            <form method="post" enctype="multipart/form-data" action="/process/normal" onsubmit="showLoading()">
                 <h2 class="text-xl font-semibold mb-4">Upload Normal FERI PDF and Optional Excel Template</h2>
                 <div class="mb-4">
                     <label class="block text-gray-700">PDF File:</label>
@@ -38,13 +44,13 @@
                 </div>
                 <div class="mb-4">
                     <label class="block text-gray-700">Freight Number:</label>
-                    <input type="number" name="freight_number" min="1" placeholder="Enter Freight Number (e.g., 200, 250, 500)" class="mt-1 p-2 border rounded w-full">
+                    <input type="number" name="freight_number" min="1" step="1" placeholder="Enter Freight Number (e.g., 200, 250, 500)" class="mt-1 p-2 border rounded w-full">
                 </div>
                 <input type="submit" value="Upload and Process" class="bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700">
             </form>
         </div>
         <div id="maritime-form" class="tab-content hidden">
-            <form method="post" enctype="multipart/form-data" action="/process/maritime">
+            <form method="post" enctype="multipart/form-data" action="/process/maritime" onsubmit="showLoading()">
                 <h2 class="text-xl font-semibold mb-4">Upload Maritime PDF and Optional Excel Template</h2>
                 <div class="mb-4">
                     <label class="block text-gray-700">PDF File:</label>
@@ -61,21 +67,28 @@
                 </div>
                 <div class="mb-4">
                     <label class="block text-gray-700">Freight Number:</label>
-                    <input type="number" name="freight_number" min="1" placeholder="Enter Freight Number (e.g., 200, 250, 500)" class="mt-1 p-2 border rounded w-full">
+                    <input type="number" name="freight_number" min="1" step="1" placeholder="Enter Freight Number (e.g., 200, 250, 500)" class="mt-1 p-2 border rounded w-full">
                 </div>
                 <div class="mb-4">
                     <label class="block text-gray-700">Container Type:</label>
                     <div class="mt-1">
-                        <input type="checkbox" name="container_type" value="40FT" class="mr-2"> 1*40FT<br>
-                        <input type="checkbox" name="container_type" value="20FT" class="mr-2"> 1*20FT
+                        <input type="radio" name="container_type" value="40FT" class="mr-2"> 1*40FT<br>
+                        <input type="radio" name="container_type" value="20FT" class="mr-2"> 1*20FT<br>
+                        <input type="radio" name="container_type" value="" class="mr-2" checked> None
                     </div>
                 </div>
                 <div class="mb-4">
                     <label class="block text-gray-700">Number of Containers:</label>
-                    <input type="number" name="num_containers" min="1" placeholder="Enter Number of Containers (default: 1)" class="mt-1 p-2 border rounded w-full">
+                    <input type="number" name="num_containers" min="1" step="1" value="1" placeholder="Enter Number of Containers (default: 1)" class="mt-1 p-2 border rounded w-full">
                 </div>
                 <input type="submit" value="Upload and Process" class="bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700">
             </form>
+        </div>
+        <!-- Loading Indicator -->
+        <div id="loading" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center">
+            <div class="bg-white p-4 rounded shadow">
+                <p class="text-gray-700">Processing...</p>
+            </div>
         </div>
         {% if data %}
         <h2 class="text-xl font-semibold mt-6">Extracted Data</h2>
@@ -98,6 +111,11 @@
             document.getElementById(tab + '-tab').classList.add('text-blue-600', 'border-blue-600');
             document.getElementById(tab + '-tab').classList.remove('text-gray-600');
         }
+
+        function showLoading() {
+            document.getElementById('loading').classList.remove('hidden');
+        }
+
         // Initialize with Normal FERI tab
         showTab('normal');
     </script>

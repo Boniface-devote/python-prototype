@@ -67,11 +67,12 @@ def process_excel_and_pdf(data, pdf_type, template_file, freight_number, contain
                 # Dynamically import and call the insertion function based on pdf_type
                 if pdf_type == 'normal':
                     from .insertions_normal import insert_data as insert_func
+                    # Normal doesn't use template_file in insertion logic
+                    insert_func(ws, data, freight_number, container_type, num_containers)
                 else:
                     from .insertions_maritime import insert_data as insert_func
-                
-                # Insert the data
-                insert_func(ws, data, freight_number, container_type, num_containers)
+                    # Pass template_file for maritime
+                    insert_func(ws, data, freight_number, container_type, num_containers, template_file)
 
                 # Force calculation of all formulas
                 wb.app.calculate()

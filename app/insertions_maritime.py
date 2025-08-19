@@ -1,10 +1,14 @@
-def insert_data(ws, data, freight_number, container_type, num_containers):
+def insert_data(ws, data, freight_number, container_type, num_containers, template_file=None):
     """
     Insert extracted data into the Excel worksheet for 'maritime' PDF type.
     """
     if 'feri_number' in data:
         ws.range('E6').value = f"FERI/AD: {data['feri_number']}"
         ws.range('B11').value = f"CERTIFICATE (FERI/ADR/AD) No : {data['feri_number']}"
+        
+    elif 'attestation_number' in data:
+        ws.range('E6').value = f"FERI/AD: {data['attestation_number']}"
+        ws.range('B11').value = f"CERTIFICATE (FERI/ADR/AD) No : {data['attestation_number']}"
     
     if 'transitaire' in data:
         ws.range('B8').value = f"DEBTOR: {data['transitaire']}"
@@ -15,17 +19,26 @@ def insert_data(ws, data, freight_number, container_type, num_containers):
     if 'bl' in data:
         ws.range('B14').value = data['bl']
     
-    # Handle CBM based on container type
-    if container_type == '40FT':
-        ws.range('D14').value = 110
-    elif container_type == '20FT':
-        ws.range('D14').value = 60
-    elif 'cbm' in data:
+    # Handle CBM based on template and container type
+    specific_templates = ['Proforma_Invoice malaba cement 0.5.xlsx', 'Proforma_Invoice malaba.xlsx']
+    if template_file in specific_templates and 'cbm' in data:
         cbm_value = float(data['cbm'].replace(' CBM', ''))
         ws.range('D14').value = cbm_value
-    
-    ws.range('E14').value = num_containers
-    ws.range('D17').value = num_containers
+    else:
+        if container_type == '40FT':
+            ws.range('D14').value = 110
+            ws.range('E14').value = num_containers
+            ws.range('D17').value = num_containers
+        elif container_type == '20FT':
+            ws.range('D14').value = 60
+            ws.range('E14').value = num_containers
+            ws.range('D17').value = num_containers
+        # elif 'cbm' in data:
+        #     cbm_value = float(data['cbm'].replace(' CBM', ''))
+        #     ws.range('D14').value = cbm_value
+        
+        # # Insert number of containers for non-specific templates
+        
     
     # Handle freight number (overrides default calculation if provided)
     if freight_number is not None:

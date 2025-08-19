@@ -67,6 +67,11 @@ def extract_data_from_pdf(pdf_content, pdf_type):
         match = re.search(r'(?:FERI N°|VALIDATION|A\.D\s+N°)\s*:\s*(\w+)', text)
         if match:
             extracted['feri_number'] = match.group(1)
+            
+         # Attestation Number
+        match = re.search(r'A\.D\s+N°\s*(\w+)', text)
+        if match:
+            extracted['attestation_number'] = match.group(1)
 
          # Importateur (only name)
         match = re.search(r'IMPORTATEUR\s*:\s*(.*?)(?=\s*(?:;|EXPORTATEUR))', text, re.DOTALL | re.IGNORECASE)
