@@ -64,45 +64,14 @@ def process_excel_and_pdf(data, pdf_type, template_file, freight_number, contain
                 wb = app.books.open(temp_excel_path)
                 ws = wb.sheets[0]  # Get the active sheet
                 
-                # Insert data into specific cells
+                # Dynamically import and call the insertion function based on pdf_type
                 if pdf_type == 'normal':
-                    if 'attestation_number' in data:
-                        ws.range('E6').value = f"FERI/AD: {data['attestation_number']}"
-                        ws.range('B11').value = f"CERTIFICATE (FERI/ADR/AD) No : {data['attestation_number']}"
-                    if 'forwarding_agent' in data:
-                        ws.range('B8').value = f"DEBTOR: {data['forwarding_agent']}"
-                    if 'importateur' in data:
-                        ws.range('B10').value = f"IMPORTER: {data['importateur']}"
-                    if 'transport_id' in data:
-                        ws.range('B14').value = data['transport_id']
-                    if 'cbm' in data:
-                        cbm_value = float(data['cbm'].replace(' CBM', ''))
-                        ws.range('D14').value = cbm_value
-                    if freight_number is not None:
-                        ws.range('D18').value = freight_number
-
-                else:  # maritime
-                    if 'feri_number' in data:
-                        ws.range('E6').value = f"FERI/AD: {data['feri_number']}"
-                        ws.range('B11').value = f"CERTIFICATE (FERI/ADR/AD) No : {data['feri_number']}"
-                    if 'transitaire' in data:
-                        ws.range('B8').value = f"DEBTOR: {data['transitaire']}"
-                    if 'importateur' in data:
-                        ws.range('B10').value = f"IMPORTER: {data['importateur']}"
-                    if 'bl' in data:
-                        ws.range('B14').value = data['bl']
-                    if 'cbm' in data and container_type not in ['40FT', '20FT']:
-                        cbm_value = float(data['cbm'].replace(' CBM', ''))
-                        ws.range('D14').value = cbm_value
-                    if container_type == '40FT':
-                        ws.range('D14').value = 110
-                    elif container_type == '20FT':
-                        ws.range('D14').value = 60
-                    ws.range('E14').value = num_containers
-                    ws.range('D17').value = num_containers
-                    ws.range('D18').value = num_containers * 250
-                    if freight_number is not None:
-                        ws.range('D18').value = freight_number
+                    from .insertions_normal import insert_data as insert_func
+                else:
+                    from .insertions_maritime import insert_data as insert_func
+                
+                # Insert the data
+                insert_func(ws, data, freight_number, container_type, num_containers)
 
                 # Force calculation of all formulas
                 wb.app.calculate()
