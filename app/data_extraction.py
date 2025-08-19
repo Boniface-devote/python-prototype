@@ -22,24 +22,23 @@ def extract_data_from_pdf(pdf_content, pdf_type):
             extracted['attestation_number'] = match.group(1)
 
         # Importateur (only name)
-        match = re.search(r'IMPORTATEUR\s*:\s*([^\s;][^;]*?)(?:\s*;|EXPORTATEUR)', text, re.DOTALL)
+        match = re.search(r'IMPORTATEUR\s*:\s*(.*?)(?=\s*(?:;|EXPORTATEUR))', text, re.DOTALL | re.IGNORECASE)
         if match:
             importateur_name = match.group(1).strip()
-            name_match = re.match(r'^[A-Za-z\s().&-]+(?:\s*\([A-Za-z]+\)\s*[A-Za-z.]+)?', importateur_name)
-            importateur_name = name_match.group(0).strip() if name_match else importateur_name
-            if importateur_name.endswith(' I'):
-                importateur_name = importateur_name[:-2].strip()
+            # remove trailing "Importateur" word if it exists
+            importateur_name = re.sub(r'\bIMPORTATEUR\b.*$', '', importateur_name, flags=re.IGNORECASE).strip()
             extracted['importateur'] = importateur_name
 
         # Exporter (only name)
-        match = re.search(r'EXPORTATEUR\s*([^\s;][^;]*?)(?:\s*;|TRANSITAIRE)', text, re.DOTALL)
+        match = re.search(r'EXPORTATEUR\s*([^\n;]+?)(?=\s+Exportater|\s*;|TRANSITAIRE)', text, re.DOTALL | re.IGNORECASE)
         if match:
             exporter_name = match.group(1).strip()
-            name_match = re.match(r'^[A-Za-z\s().&-]+(?:\s*\([A-Za-z]+\)\s*[A-Za-z.]+)?', exporter_name)
+            name_match = re.match(r'^[A-Za-z\s().&-]+', exporter_name)
             exporter_name = name_match.group(0).strip() if name_match else exporter_name
             if exporter_name.endswith(' E'):
                 exporter_name = exporter_name[:-2].strip()
             extracted['exporter'] = exporter_name
+
 
         # Forwarding Agent (only name)
         match = re.search(r'TRANSITAIRE\s*:\s*([^\s;][^;]*?)(?:\s*Forwarding agent|DEST\.)', text, re.DOTALL)
@@ -69,15 +68,14 @@ def extract_data_from_pdf(pdf_content, pdf_type):
         if match:
             extracted['feri_number'] = match.group(1)
 
-        # Importateur (only name)
-        match = re.search(r'IMPORTATEUR\s*:\s*([^\s;][^;]*?)(?:\s*;|EXPORTATEUR|ADD:|$)', text, re.DOTALL)
+         # Importateur (only name)
+        match = re.search(r'IMPORTATEUR\s*:\s*(.*?)(?=\s*(?:;|EXPORTATEUR))', text, re.DOTALL | re.IGNORECASE)
         if match:
             importateur_name = match.group(1).strip()
-            name_match = re.match(r'^[A-Za-z\s().&-]+(?:\s*\([A-Za-z]+\)\s*[A-Za-z.]+)?', importateur_name)
-            importateur_name = name_match.group(0).strip() if name_match else importateur_name
-            if importateur_name.endswith(' I'):
-                importateur_name = importateur_name[:-2].strip()
+            # remove trailing "Importateur" word if it exists
+            importateur_name = re.sub(r'\bIMPORTATEUR\b.*$', '', importateur_name, flags=re.IGNORECASE).strip()
             extracted['importateur'] = importateur_name
+
 
         # Transitaire (only name)
         match = re.search(r'TRANSITAIRE\s*:\s*([^\s;][^;]*?)(?:\s*Forwarding agent|DEST\.|ADD:|$)', text, re.DOTALL)
@@ -101,14 +99,15 @@ def extract_data_from_pdf(pdf_content, pdf_type):
         if match:
             extracted['gross_weight'] = float(match.group(1))
 
-        # Exporter
-        match = re.search(r'EXPORTATEUR\s*([^\s;][^;]*?)(?:\s*;|TRANSITAIRE|$)', text, re.DOTALL)
+        # Exporter (only name)
+        match = re.search(r'EXPORTATEUR\s*([^\n;]+?)(?=\s+Exportater|\s*;|TRANSITAIRE)', text, re.DOTALL | re.IGNORECASE)
         if match:
             exporter_name = match.group(1).strip()
-            name_match = re.match(r'^[A-Za-z\s().&-]+(?:\s*\([A-Za-z]+\)\s*[A-Za-z.]+)?', exporter_name)
+            name_match = re.match(r'^[A-Za-z\s().&-]+', exporter_name)
             exporter_name = name_match.group(0).strip() if name_match else exporter_name
             if exporter_name.endswith(' E'):
                 exporter_name = exporter_name[:-2].strip()
             extracted['exporter'] = exporter_name
+
 
     return extracted
