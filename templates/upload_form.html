@@ -18,10 +18,16 @@
         <div class="mb-4">
             <ul class="flex border-b">
                 <li class="mr-1">
-                    <button id="normal-tab" class="tab-button bg-white inline-block py-2 px-4 text-blue-600 font-semibold border-b-2 border-blue-600" onclick="showTab('normal')">Normal FERI PDFs</button>
+                    <button id="normal-tab" class="tab-button bg-white inline-block py-2 px-4 text-blue-600 font-semibold border-b-2 border-blue-600" onclick="showTab('normal')">LABAN PDFs</button>
                 </li>
                 <li class="mr-1">
-                    <button id="maritime-tab" class="tab-button bg-white inline-block py-2 px-4 text-gray-600 font-semibold" onclick="showTab('maritime')">Maritime PDFs</button>
+                    <button id="maritime-tab" class="tab-button bg-white inline-block py-2 px-4 text-gray-600 font-semibold" onclick="showTab('maritime')">MALABA PDFs</button>
+                </li>
+                <li class="mr-1">
+                    <button id="possiano-tab" class="tab-button bg-white inline-block py-2 px-4 text-gray-600 font-semibold" onclick="showTab('possiano')">POSSIANO PDFs</button>
+                </li>
+                <li class="mr-1">
+                    <button id="busia-tab" class="tab-button bg-white inline-block py-2 px-4 text-gray-600 font-semibold" onclick="showTab('busia')">BUSIA PDFs</button>
                 </li>
             </ul>
         </div>
@@ -61,6 +67,76 @@
                     <select name="template_file" class="mt-1 p-2 border rounded w-full">
                         <option value="">Select a template (optional)</option>
                         {% for template in maritime_templates %}
+                        <option value="{{ template }}">{{ template }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-gray-700">Freight Number:</label>
+                    <input type="number" name="freight_number" min="1" step="1" placeholder="Enter Freight Number (e.g., 200, 250, 500)" class="mt-1 p-2 border rounded w-full">
+                </div>
+                <div class="mb-4">
+                    <label class="block text-gray-700">Container Type:</label>
+                    <div class="mt-1">
+                        <input type="radio" name="container_type" value="40FT" class="mr-2"> 1*40FT<br>
+                        <input type="radio" name="container_type" value="20FT" class="mr-2"> 1*20FT<br>
+                        <input type="radio" name="container_type" value="" class="mr-2" checked> None
+                    </div>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-gray-700">Number of Containers:</label>
+                    <input type="number" name="num_containers" min="1" step="1" value="1" placeholder="Enter Number of Containers (default: 1)" class="mt-1 p-2 border rounded w-full">
+                </div>
+                <input type="submit" value="Upload and Process" class="bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700">
+            </form>
+        </div>
+        <div id="busia-form" class="tab-content hidden">
+            <form method="post" enctype="multipart/form-data" action="/process/busia" onsubmit="showLoading()">
+                <h2 class="text-xl font-semibold mb-4">Upload Busia PDF and Optional Excel Template</h2>
+                <div class="mb-4">
+                    <label class="block text-gray-700">PDF File:</label>
+                    <input type="file" name="pdf_file" accept=".pdf" class="mt-1 p-2 border rounded w-full" required>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-gray-700">Excel Template:</label>
+                    <select name="template_file" class="mt-1 p-2 border rounded w-full">
+                        <option value="">Select a template (optional)</option>
+                        {% for template in busia_templates %}
+                        <option value="{{ template }}">{{ template }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-gray-700">Freight Number:</label>
+                    <input type="number" name="freight_number" min="1" step="1" placeholder="Enter Freight Number (e.g., 200, 250, 500)" class="mt-1 p-2 border rounded w-full">
+                </div>
+                <div class="mb-4">
+                    <label class="block text-gray-700">Container Type:</label>
+                    <div class="mt-1">
+                        <input type="radio" name="container_type" value="40FT" class="mr-2"> 1*40FT<br>
+                        <input type="radio" name="container_type" value="20FT" class="mr-2"> 1*20FT<br>
+                        <input type="radio" name="container_type" value="" class="mr-2" checked> None
+                    </div>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-gray-700">Number of Containers:</label>
+                    <input type="number" name="num_containers" min="1" step="1" value="1" placeholder="Enter Number of Containers (default: 1)" class="mt-1 p-2 border rounded w-full">
+                </div>
+                <input type="submit" value="Upload and Process" class="bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700">
+            </form>
+        </div>
+        <div id="possiano-form" class="tab-content hidden">
+            <form method="post" enctype="multipart/form-data" action="/process/possiano" onsubmit="showLoading()">
+                <h2 class="text-xl font-semibold mb-4">Upload Possiano PDF and Optional Excel Template</h2>
+                <div class="mb-4">
+                    <label class="block text-gray-700">PDF File:</label>
+                    <input type="file" name="pdf_file" accept=".pdf" class="mt-1 p-2 border rounded w-full" required>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-gray-700">Excel Template:</label>
+                    <select name="template_file" class="mt-1 p-2 border rounded w-full">
+                        <option value="">Select a template (optional)</option>
+                        {% for template in possiano_templates %}
                         <option value="{{ template }}">{{ template }}</option>
                         {% endfor %}
                     </select>

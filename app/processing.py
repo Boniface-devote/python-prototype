@@ -9,6 +9,8 @@ import shutil
 # Directory containing Excel templates
 laban_dir = 'template/laban'  # Directory for Normal FERI templates
 malaba_dir = 'template/malaba'  # Directory for Maritime templates
+possiano_dir = 'template/possiano'  # Directory for Possiano templates
+busia_dir = 'template/busia'  # Directory for Busia templates
 
 # Global variables to store the modified files and data in memory
 modified_excel_global = None
@@ -42,7 +44,13 @@ def process_excel_and_pdf(data, pdf_type, template_file, freight_number, contain
     # Check for selected template
     template_path = None
     if template_file:
-        template_path = os.path.join(laban_dir if pdf_type == 'normal' else malaba_dir, template_file)
+        base_dir = {
+            'normal': laban_dir,
+            'maritime': malaba_dir,
+            'possiano': possiano_dir,
+            'busia': busia_dir,
+        }.get(pdf_type, laban_dir)
+        template_path = os.path.join(base_dir, template_file)
         if not os.path.exists(template_path):
             template_path = None
 
@@ -67,12 +75,21 @@ def process_excel_and_pdf(data, pdf_type, template_file, freight_number, contain
                 # Dynamically import and call the insertion function based on pdf_type
                 if pdf_type == 'normal':
                     from .insertions_normal import insert_data as insert_func
-                    # Normal doesn't use template_file in insertion logic
-                    insert_func(ws, data, freight_number, container_type, num_containers)
+                elif pdf_type == 'maritime':
+                    from .insertions_maritime import insert_data as insert_func
+                elif pdf_type == 'possiano':
+                    from .insertions_possiano import insert_data as insert_func
+                elif pdf_type == 'busia':
+                    from .insertions_busia import insert_data as insert_func
                 else:
                     from .insertions_maritime import insert_data as insert_func
-                    # Pass template_file for maritime
+                
+                # Insert the data
+                # Pass template filename only for modules that accept it
+                try:
                     insert_func(ws, data, freight_number, container_type, num_containers, template_file)
+                except TypeError:
+                    insert_func(ws, data, freight_number, container_type, num_containers)
 
                 # Force calculation of all formulas
                 wb.app.calculate()
@@ -85,7 +102,7 @@ def process_excel_and_pdf(data, pdf_type, template_file, freight_number, contain
                 
                 # Read the modified Excel file into memory
                 with open(temp_excel_path, 'rb') as f:
-                    modified_excel = BytesIO(f.read())
+                    modified_excel = BytesIO(f.read()) 
                 
                 # Read the PDF file into memory
                 with open(temp_pdf_path, 'rb') as f:

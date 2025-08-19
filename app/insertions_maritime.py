@@ -29,19 +29,22 @@ def insert_data(ws, data, freight_number, container_type, num_containers, templa
             ws.range('D14').value = 110
             ws.range('E14').value = num_containers
             ws.range('D17').value = num_containers
+            # Handle freight number (overrides default calculation if provided)
+            if freight_number is not None:
+                ws.range('D18').value = freight_number
+            else:
+                ws.range('D18').value = num_containers * 250
         elif container_type == '20FT':
             ws.range('D14').value = 60
             ws.range('E14').value = num_containers
             ws.range('D17').value = num_containers
+            # Handle freight number (overrides default calculation if provided)
+            if freight_number is not None:
+                ws.range('D18').value = freight_number
+            else:
+                ws.range('D18').value = num_containers * 250
         # elif 'cbm' in data:
         #     cbm_value = float(data['cbm'].replace(' CBM', ''))
         #     ws.range('D14').value = cbm_value
         
         # # Insert number of containers for non-specific templates
-        
-    
-    # Handle freight number (overrides default calculation if provided)
-    if freight_number is not None:
-        ws.range('D18').value = freight_number
-    else:
-        ws.range('D18').value = num_containers * 250

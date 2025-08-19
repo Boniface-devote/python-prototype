@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, request, send_file
 from .data_extraction import extract_data_from_pdf
-from .processing import get_available_templates, process_excel_and_pdf, laban_dir, malaba_dir, modified_excel_global, modified_pdf_global, data_global, pdf_type_global
+from .processing import get_available_templates, process_excel_and_pdf, laban_dir, malaba_dir, possiano_dir, busia_dir, modified_excel_global, modified_pdf_global, data_global, pdf_type_global
 import re
 
 bp = Blueprint('main', __name__)
@@ -11,11 +11,13 @@ def index():
     # return render_template('upload_form.html', data=None, modified=False, templates=templates)
     normal_templates = get_available_templates(laban_dir)
     maritime_templates = get_available_templates(malaba_dir)
-    return render_template('upload_form.html', normal_templates=normal_templates, maritime_templates=maritime_templates)
+    possiano_templates= get_available_templates(possiano_dir)
+    busia_templates = get_available_templates(busia_dir)
+    return render_template('upload_form.html', normal_templates=normal_templates, maritime_templates=maritime_templates, possiano_templates=possiano_templates, busia_templates=busia_templates)
 
 @bp.route('/process/<pdf_type>', methods=['POST'])
 def process_pdf(pdf_type):
-    if pdf_type not in ['normal', 'maritime']:
+    if pdf_type not in ['normal', 'maritime', 'possiano', 'busia']:
         return "Invalid PDF type", 400
 
     data = None
@@ -57,7 +59,18 @@ def process_pdf(pdf_type):
 
     normal_templates = get_available_templates(laban_dir)
     maritime_templates = get_available_templates(malaba_dir)
-    return render_template('upload_form.html', data=data, json_data=json_data, modified=modified, normal_templates=normal_templates, maritime_templates=maritime_templates)
+    possiano_templates = get_available_templates(possiano_dir)
+    busia_templates = get_available_templates(busia_dir)
+    return render_template(
+        'upload_form.html',
+        data=data,
+        json_data=json_data,
+        modified=modified,
+        normal_templates=normal_templates,
+        maritime_templates=maritime_templates,
+        possiano_templates=possiano_templates,
+        busia_templates=busia_templates,
+    )
 
 @bp.route('/download_excel')
 def download_excel():
@@ -69,7 +82,7 @@ def download_excel():
     download_name = 'modified.xlsx'
     if data_global and pdf_type_global:
         identifier = None
-        if pdf_type_global == 'maritime' and 'bl' in data_global:
+        if pdf_type_global in ['maritime', 'busia', 'possiano'] and 'bl' in data_global:
             identifier = data_global['bl']
         elif pdf_type_global == 'normal' and 'transport_id' in data_global:
             identifier = data_global['transport_id']
@@ -96,7 +109,7 @@ def download_pdf():
     download_name = 'modified.pdf'
     if data_global and pdf_type_global:
         identifier = None
-        if pdf_type_global == 'maritime' and 'bl' in data_global:
+        if pdf_type_global in ['maritime', 'busia', 'possiano'] and 'bl' in data_global:
             identifier = data_global['bl']
         elif pdf_type_global == 'normal' and 'transport_id' in data_global:
             identifier = data_global['transport_id']
