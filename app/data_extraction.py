@@ -98,6 +98,10 @@ def extract_data_from_pdf(pdf_content, pdf_type):
         match = re.search(r'(\d+\.\d+\s*CBM)\s*(?=(?:POIDS|TEU|CONTENEUR|$))', text)
         if match:
             extracted['cbm'] = match.group(1).strip()
+        # CBM (Cubic Meters)
+        match = re.search(r'(\d+\.\d+\s*CBM)', text)
+        if match:
+            extracted['cbm'] = match.group(1).strip()
 
         # Gross Weight
         match = re.search(r'POIDS BRUT\s*:\s*([\d\.]+)\s*(?:Kg|T)', text)
