@@ -43,8 +43,6 @@ def insert_data(ws, data, freight_number, container_type, num_containers, templa
                 ws.range('D18').value = freight_number
             else:
                 ws.range('D18').value = num_containers * 250
-        # elif 'cbm' in data:
-        #     cbm_value = float(data['cbm'].replace(' CBM', ''))
-        #     ws.range('D14').value = cbm_value
+        
         
         # # Insert number of containers for non-specific templates
