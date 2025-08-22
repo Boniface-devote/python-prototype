@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, send_file
+from flask import Blueprint, render_template, request, send_file, jsonify
 from .data_extraction import extract_data_from_pdf
 from .processing import get_available_templates, process_excel_and_pdf, laban_dir, malaba_dir, possiano_dir, busia_dir, modified_excel_global, modified_pdf_global, data_global, pdf_type_global
 import re
@@ -14,6 +14,56 @@ def index():
     possiano_templates= get_available_templates(possiano_dir)
     busia_templates = get_available_templates(busia_dir)
     return render_template('upload_form.html', normal_templates=normal_templates, maritime_templates=maritime_templates, possiano_templates=possiano_templates, busia_templates=busia_templates)
+
+@bp.route('/api/process/<pdf_type>', methods=['POST'])
+def api_process_pdf(pdf_type):
+    """API endpoint for frontend processing"""
+    if pdf_type not in ['normal', 'maritime', 'possiano', 'busia']:
+        return jsonify({"error": "Invalid PDF type"}), 400
+
+    if 'pdf_file' not in request.files:
+        return jsonify({"error": "No PDF file part"}), 400
+    
+    pdf_file = request.files['pdf_file']
+    if pdf_file.filename == '':
+        return jsonify({"error": "No selected PDF file"}), 400
+    
+    if pdf_file and pdf_file.filename.endswith('.pdf'):
+        pdf_content = pdf_file.read()
+        data = extract_data_from_pdf(pdf_content, pdf_type)
+        
+        # Get Freight Number from form input
+        freight_number = request.form.get('freight_number', '').strip()
+        try:
+            freight_number = int(freight_number) if freight_number else None
+        except ValueError:
+            freight_number = None
+
+        # Get Container Type and Number of Containers
+        container_type = request.form.get('container_type', '')
+        num_containers = 1
+        if pdf_type in ['maritime', 'busia', 'possiano']:
+            num_containers = request.form.get('num_containers', '').strip()
+            try:
+                num_containers = int(num_containers) if num_containers else 1
+            except ValueError:
+                num_containers = 1
+
+        # Process Excel and PDF
+        template_file = request.form.get('template_file', '').strip()
+        modified_excel, modified_pdf, json_data = process_excel_and_pdf(
+            data, pdf_type, template_file, freight_number, container_type, num_containers
+        )
+        modified = modified_excel is not None
+
+        return jsonify({
+            "success": True,
+            "data": data,
+            "modified": modified,
+            "message": "PDF processed successfully"
+        })
+
+    return jsonify({"error": "Invalid file type"}), 400
 
 @bp.route('/process/<pdf_type>', methods=['POST'])
 def process_pdf(pdf_type):
