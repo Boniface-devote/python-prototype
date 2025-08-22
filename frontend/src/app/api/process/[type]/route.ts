@@ -2,13 +2,15 @@ import { NextRequest, NextResponse } from 'next/server';
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { type: string } }
+  { params }: { params: Promise<{ type: string }> }
 ) {
   try {
+    // Await the params promise in Next.js 15
+    const { type } = await params;
     const formData = await request.formData();
     
     // Forward the request to the Flask backend
-    const flaskResponse = await fetch(`http://localhost:5000/api/process/${params.type}`, {
+    const flaskResponse = await fetch(`http://localhost:5000/api/process/${type}`, {
       method: 'POST',
       body: formData,
     });
