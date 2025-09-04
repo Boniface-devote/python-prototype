@@ -6,6 +6,22 @@
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-100 font-sans">
+    <!-- Navigation Bar -->
+    <nav class="bg-white shadow-md border-b mb-6">
+        <div class="container mx-auto px-6">
+            <div class="flex justify-center">
+                <div class="flex space-x-1">
+                    <a href="{{ url_for('main.index') }}" onclick="return true;" class="nav-tab active inline-block py-3 px-6 text-blue-600 font-semibold border-b-2 border-blue-600 hover:text-blue-800 transition-colors">
+                        Proforma Generator
+                    </a>
+                    <a href="{{ url_for('main.flagging_index') }}" onclick="return true;" class="nav-tab inline-block py-3 px-6 text-gray-600 font-semibold border-b-2 border-transparent hover:text-gray-800 hover:border-gray-300 transition-colors">
+                        Flagging
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
     <div class="container mx-auto p-6">
         <h1 class="text-2xl font-bold mb-6 text-center">PDF Data Extractor</h1>
         <!-- Error Message Display -->

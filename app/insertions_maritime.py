@@ -20,9 +20,11 @@ def insert_data(ws, data, freight_number, container_type, num_containers, templa
         ws.range('B14').value = data['bl']
     
     # Handle CBM based on template and container type
-    specific_templates = ['Proforma_Invoice malaba cement 0.5.xlsx', 'Proforma_Invoice malaba.xlsx']
+    specific_templates = ['Proforma_Invoice malaba cement 0.5.xlsx', 
+                          'Proforma_Invoice malaba.xlsx',
+                          'Proforma_roro.xlsx']
     if template_file in specific_templates and 'cbm' in data:
-        cbm_value = float(data['cbm'].replace(' CBM', ''))
+        cbm_value = float(data['cbm'])  # already a float from extraction
         ws.range('D14').value = cbm_value
     else:
         if container_type == '40FT':

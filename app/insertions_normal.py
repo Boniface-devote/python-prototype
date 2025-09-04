@@ -24,11 +24,17 @@ def insert_data(ws, data, freight_number, container_type='', num_containers=1, t
     if 'cbm' in data:
         try:
             cbm_value = float(data['cbm'].replace(' CBM', '').strip())
-            specific_templates = ['Corporate Legends Limited.xlsx', 'RHO LOGISTICS AND FREIGHT FORWARDER.xlsx']
+            specific_templates = ['Corporate Legends Limited.xlsx', 'RHO LOGISTICS AND FREIGHT FORWARDER.xlsx', 'PROFORMA_INVOICE_1x20.xlsx', 'PROFORMA_INVOICE_1x40.xlsx']
             
             if template_file in specific_templates:
                 truncated_cbm = math.trunc(cbm_value)
                 ws.range('D14').value = truncated_cbm
+            # elif template_file == 'PROFORMA_INVOICE_1x40.xlsx':
+            #     cbm_value= 110
+            #     ws.range('D14').value = cbm_value
+            # elif template_file == 'PROFORMA_INVOICE_1x20.xlsx':
+            #     cbm_value= 60
+            #     ws.range('D14').value = cbm_value
             else:
                 ws.range('D14').value = cbm_value
         except ValueError:

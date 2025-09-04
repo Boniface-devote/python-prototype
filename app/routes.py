@@ -1,7 +1,11 @@
-from flask import Blueprint, render_template, request, send_file
-from .data_extraction import extract_data_from_pdf
+import json
+import subprocess
+import sys
+from flask import Blueprint, jsonify, render_template, request, send_file
+from .data_extraction import extract_certificate_data, extract_data_from_pdf
 from .processing import get_available_templates, process_excel_and_pdf, laban_dir, malaba_dir, possiano_dir, busia_dir, modified_excel_global, modified_pdf_global, data_global, pdf_type_global
 import re
+import os
 
 bp = Blueprint('main', __name__)
 
@@ -125,3 +129,37 @@ def download_pdf():
         download_name=download_name,
         mimetype='application/pdf'
     )
+
+#Invesco flagging routes
+@bp.route("/flagging/", methods=["GET", "POST"])
+def flagging_index():
+    extracted_data = None
+    if request.method == "POST":
+        if "pdf" not in request.files:
+            return "No file uploaded", 400
+        pdf_file = request.files["pdf"]
+        if pdf_file.filename == "":
+            return "No selected file", 400
+
+        extracted_data = extract_certificate_data(pdf_file)
+
+    return render_template("index.html", data=extracted_data)
+
+@bp.route("/flagging/fill-form", methods=["POST"])
+def fill_form():
+    data = request.get_json()
+    if not data:
+        return jsonify({"error": "No data provided"}), 400
+
+    try:
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+        login_script = os.path.join(base_dir, "login.py")
+        result = subprocess.run(
+            [sys.executable, login_script],
+            input=json.dumps(data),
+            text=True,
+            capture_output=True
+        )
+        return jsonify({"status": "success", "output": result.stdout, "error": result.stderr})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
